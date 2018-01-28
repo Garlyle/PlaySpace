@@ -123,8 +123,9 @@ class SceneMain extends Scene {
 	onUpdate(): void {
 		this.bg.tilePosition.x -= 1;
 		if (msg == "buttonExit") {
-			this.onExit();
-			currentScene = new SceneSplash();
+			//this.onExit();
+			//currentScene = new SceneSplash();
+			window.location.replace("https://www.linkedin.com/in/mil%C3%A1n-kov%C3%A1cs-267b0993/");
 		}
 		if (msg == "button1" || msg == "button2" || msg == "button3") {
 			this.onExit();
@@ -223,8 +224,11 @@ class SceneGame extends Scene {
 	gameOver: PIXI.Sprite;
 	frame: number;
 	fireDelay: number;
+	isGameOver: boolean;
 	constructor() {
 		super();
+
+		this.isGameOver = false;
 
 		this.frame = 0;
 		this.fireDelay = 0;
@@ -249,6 +253,14 @@ class SceneGame extends Scene {
 		this.projectiles = [];
 	}
 	onUpdate(): void {
+		if (this.isGameOver) {
+			this.frame++;
+			if (this.frame > 180) {
+				this.onExit();
+				currentScene = new SceneMain();
+			}
+			return;
+		}
 		// Update Background
 		this.bgFar.tilePosition.x -= 1;
 		this.bgClose.tilePosition.x -= 4;
@@ -303,8 +315,12 @@ class SceneGame extends Scene {
 		for (var i = 0; i < this.enemies.length; i++) {
 			this.enemies[i].x -= speed;
 			if (this.collide(this.enemies[i], this.player)) {
-				this.onExit();
-				currentScene = new SceneMain();
+				this.frame = 0;
+				this.isGameOver = true;
+				this.gameOver = new PIXI.Sprite(PIXI.loader.resources["gameover"].texture);
+				this.gameOver.x = (width - this.gameOver.width) / 2;
+				this.gameOver.y = (height - this.gameOver.height) / 2;
+				app.stage.addChild(this.gameOver);
 			}
 			for (var j = 0; j < this.projectiles.length; j++) {
 				if (this.collide(this.enemies[i], this.projectiles[j])) {
@@ -350,8 +366,7 @@ class SceneGame extends Scene {
 		}
 	}
 	onExit(): void {
-		app.stage.removeChild(this.bgFar);
-		app.stage.removeChild(this.bgClose);
+		app.stage.removeChildren(0, app.stage.children.length);
 	}
 	collide(spriteA: PIXI.Sprite, spriteB: PIXI.Sprite): boolean {
 		if (spriteA.x < spriteB.x + spriteB.width &&
@@ -398,7 +413,7 @@ function keyReleased(event) {
 
 function run() {
 	// Init Global Variables
-	currentScene = new SceneGame();
+	currentScene = new SceneSplash();
 	keyLeft = false;
 	keyRight = false;
 	keyUp = false;

@@ -121,8 +121,9 @@ var SceneMain = /** @class */ (function (_super) {
     SceneMain.prototype.onUpdate = function () {
         this.bg.tilePosition.x -= 1;
         if (msg == "buttonExit") {
-            this.onExit();
-            currentScene = new SceneSplash();
+            //this.onExit();
+            //currentScene = new SceneSplash();
+            window.location.replace("https://www.linkedin.com/in/mil%C3%A1n-kov%C3%A1cs-267b0993/");
         }
         if (msg == "button1" || msg == "button2" || msg == "button3") {
             this.onExit();
@@ -203,6 +204,7 @@ var SceneGame = /** @class */ (function (_super) {
     __extends(SceneGame, _super);
     function SceneGame() {
         var _this = _super.call(this) || this;
+        _this.isGameOver = false;
         _this.frame = 0;
         _this.fireDelay = 0;
         _this.bgFar = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgFar"].texture, 320, 240);
@@ -215,13 +217,21 @@ var SceneGame = /** @class */ (function (_super) {
         _this.player.x = 50;
         _this.player.y = height / 2;
         app.stage.addChild(_this.player);
-        _this.particle = new PIXI.ParticleContainer(1000, { alphaAndTint: true });
+        _this.particle = new PIXI.ParticleContainer();
         app.stage.addChild(_this.particle);
         _this.enemies = [];
         _this.projectiles = [];
         return _this;
     }
     SceneGame.prototype.onUpdate = function () {
+        if (this.isGameOver) {
+            this.frame++;
+            if (this.frame > 180) {
+                this.onExit();
+                currentScene = new SceneMain();
+            }
+            return;
+        }
         // Update Background
         this.bgFar.tilePosition.x -= 1;
         this.bgClose.tilePosition.x -= 4;
@@ -274,8 +284,12 @@ var SceneGame = /** @class */ (function (_super) {
         for (var i = 0; i < this.enemies.length; i++) {
             this.enemies[i].x -= speed;
             if (this.collide(this.enemies[i], this.player)) {
-                this.onExit();
-                currentScene = new SceneMain();
+                this.frame = 0;
+                this.isGameOver = true;
+                this.gameOver = new PIXI.Sprite(PIXI.loader.resources["gameover"].texture);
+                this.gameOver.x = (width - this.gameOver.width) / 2;
+                this.gameOver.y = (height - this.gameOver.height) / 2;
+                app.stage.addChild(this.gameOver);
             }
             for (var j = 0; j < this.projectiles.length; j++) {
                 if (this.collide(this.enemies[i], this.projectiles[j])) {
@@ -319,8 +333,7 @@ var SceneGame = /** @class */ (function (_super) {
         }
     };
     SceneGame.prototype.onExit = function () {
-        app.stage.removeChild(this.bgFar);
-        app.stage.removeChild(this.bgClose);
+        app.stage.removeChildren(0, app.stage.children.length);
     };
     SceneGame.prototype.collide = function (spriteA, spriteB) {
         if (spriteA.x < spriteB.x + spriteB.width &&
@@ -369,7 +382,7 @@ function keyReleased(event) {
 }
 function run() {
     // Init Global Variables
-    currentScene = new SceneGame();
+    currentScene = new SceneSplash();
     keyLeft = false;
     keyRight = false;
     keyUp = false;
