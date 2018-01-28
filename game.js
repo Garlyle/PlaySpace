@@ -254,8 +254,7 @@ var SceneGame = /** @class */ (function (_super) {
             var newEnemy = new PIXI.Sprite(PIXI.loader.resources["enemy"].texture);
             newEnemy.scale.set(0.25, 0.25);
             newEnemy.x = width + 50;
-            newEnemy.y = Math.random() * (height - 64);
-            newEnemy.anchor.set(0.5, 0.5);
+            newEnemy.y = Math.random() * (height - newEnemy.height);
             this.enemies.push(newEnemy);
             app.stage.addChild(newEnemy);
             this.frame = 0;
@@ -272,7 +271,23 @@ var SceneGame = /** @class */ (function (_super) {
         // Update enemies
         for (var i = 0; i < this.enemies.length; i++) {
             this.enemies[i].x -= speed;
-            this.enemies[i].rotation -= 0.05;
+            if (this.collide(this.enemies[i], this.player)) {
+                this.onExit();
+                currentScene = new SceneMain();
+            }
+            for (var j = 0; j < this.projectiles.length; j++) {
+                if (this.collide(this.enemies[i], this.projectiles[j])) {
+                    app.stage.removeChild(this.enemies[i]);
+                    this.enemies.splice(i, 1);
+                    i--;
+                    app.stage.removeChild(this.projectiles[j]);
+                    this.projectiles.splice(j, 1);
+                    j--;
+                    break;
+                }
+            }
+        }
+        for (var i = 0; i < this.enemies.length; i++) {
             if (this.enemies[i].x < -this.enemies[i].width) {
                 app.stage.removeChild(this.enemies[i]);
                 this.enemies.splice(i, 1);
@@ -283,6 +298,15 @@ var SceneGame = /** @class */ (function (_super) {
     SceneGame.prototype.onExit = function () {
         app.stage.removeChild(this.bgFar);
         app.stage.removeChild(this.bgClose);
+    };
+    SceneGame.prototype.collide = function (spriteA, spriteB) {
+        if (spriteA.x < spriteB.x + spriteB.width &&
+            spriteA.x + spriteA.width > spriteB.x &&
+            spriteA.y < spriteB.y + spriteB.height &&
+            spriteA.height + spriteA.y > spriteB.y) {
+            return true;
+        }
+        return false;
     };
     return SceneGame;
 }(Scene));
