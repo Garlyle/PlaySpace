@@ -215,14 +215,20 @@ class Button {
 
 class SceneGame extends Scene {
 	player: PIXI.Sprite;
-	enemy: PIXI.Sprite;
+	enemies: PIXI.Sprite[];
 	particle: PIXI.Sprite;
-	projctile: PIXI.Sprite;
+	projectiles: PIXI.Sprite[];
 	bgFar: PIXI.extras.TilingSprite;
 	bgClose: PIXI.extras.TilingSprite;
 	gameOver: PIXI.Sprite;
+	frame: number;
+	fireDelay: number;
 	constructor() {
 		super();
+
+		this.frame = 0;
+		this.fireDelay = 0;
+
 		this.bgFar = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgFar"].texture, 320, 240);
 		this.bgFar.scale.set(2.5, 2.5);
 		app.stage.addChild(this.bgFar);
@@ -235,10 +241,16 @@ class SceneGame extends Scene {
 		this.player.x = 50;
 		this.player.y = height / 2;
 		app.stage.addChild(this.player);
+
+		this.enemies = [];
+		this.projectiles = [];
 	}
 	onUpdate(): void {
+		// Update Background
 		this.bgFar.tilePosition.x -= 1;
 		this.bgClose.tilePosition.x -= 4;
+
+		// Player controls
 		if (keyLeft && this.player.x > 0) {
 			this.player.x -= speed;
 		} else if(keyRight && this.player.x < width - this.player.texture.width) {
@@ -248,6 +260,52 @@ class SceneGame extends Scene {
 			this.player.y -= speed;
 		} else if(keyDown && this.player.y < height - this.player.texture.height) {
 			this.player.y += speed;
+		}
+
+		// Timer check for projectiles
+		if (this.fireDelay != 0) {
+			this.fireDelay--;
+		} else if (keySpace) {
+			var newProjectile = new PIXI.Sprite(PIXI.loader.resources["projectile"].texture);
+			newProjectile.x = this.player.x;
+			newProjectile.y = this.player.y + this.player.texture.height / 2;
+			this.projectiles.push(newProjectile);
+			app.stage.addChild(newProjectile);
+			this.fireDelay = 30;
+		}
+
+		// Timer for adding new enemies
+		this.frame++;
+		if (this.frame >= 120) {
+			var newEnemy = new PIXI.Sprite(PIXI.loader.resources["enemy"].texture);
+			newEnemy.scale.set(0.25, 0.25);
+			newEnemy.x = width + 50;
+			newEnemy.y = Math.random() * (height - 64);
+			newEnemy.anchor.set(0.5, 0.5);
+			this.enemies.push(newEnemy);
+			app.stage.addChild(newEnemy);
+			this.frame = 0;
+		}
+
+		// Update projectiles
+		for (var i = 0; i < this.projectiles.length; i++) {
+			this.projectiles[i].x += speed * 3;
+			if (this.projectiles[i].x > width) {
+				app.stage.removeChild(this.projectiles[i]);
+				this.projectiles.splice(i, 1);
+				i--;
+			}
+		}
+
+		// Update enemies
+		for (var i = 0; i < this.enemies.length; i++) {
+			this.enemies[i].x -= speed;
+			this.enemies[i].rotation -= 0.05;
+			if (this.enemies[i].x < -this.enemies[i].width) {
+				app.stage.removeChild(this.enemies[i]);
+				this.enemies.splice(i, 1);
+				i--;
+			}
 		}
 	}
 	onExit(): void {
