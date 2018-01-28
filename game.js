@@ -15,7 +15,7 @@ var width = 800;
 var height = 600;
 var speed = 4;
 var currentScene;
-var msg = "text";
+var msg = "";
 var keyLeft, keyRight, keyUp, keyDown, keySpace;
 //Create a Pixi Application
 var app = new PIXI.Application({
@@ -44,17 +44,23 @@ PIXI.loader
     .add("bgFar", "assets/bgFar.png")
     .add("gameover", "assets/game_over.png")
     .load(run);
+// Abstract Scene class, all Scene must have these functions
 var Scene = /** @class */ (function () {
     function Scene() {
     }
     ;
+    Scene.prototype.onExit = function () {
+        app.stage.removeChildren(0, app.stage.children.length);
+    };
     return Scene;
 }());
+// Splash Screen, logo for 2 seconds
 var SceneSplash = /** @class */ (function (_super) {
     __extends(SceneSplash, _super);
     function SceneSplash() {
         var _this = _super.call(this) || this;
         _this.frame = 0;
+        // Add the logo
         _this.logo = new PIXI.Sprite(PIXI.loader.resources["logo"].texture);
         _this.logo.x = (width - _this.logo.width) / 2;
         _this.logo.y = (height - _this.logo.height) / 2;
@@ -64,19 +70,19 @@ var SceneSplash = /** @class */ (function (_super) {
     }
     SceneSplash.prototype.onUpdate = function () {
         if (this.frame < 12) {
+            // Fade In
             this.logo.alpha += 1 / 12;
         }
         else if (this.frame > (120 - 12) && this.frame <= 120) {
+            // Fade Out
             this.logo.alpha -= 1 / 12;
         }
         if (this.frame > 240) {
+            // Switch to Menu
             this.onExit();
             currentScene = new SceneMain();
         }
         this.frame++;
-    };
-    SceneSplash.prototype.onExit = function () {
-        app.stage.removeChild(this.logo);
     };
     return SceneSplash;
 }(Scene));
@@ -84,6 +90,7 @@ var SceneMain = /** @class */ (function (_super) {
     __extends(SceneMain, _super);
     function SceneMain() {
         var _this = _super.call(this) || this;
+        // Create the sliding background
         _this.bg = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgStars"].texture, 1920, 1080);
         _this.bg.scale.set(0.6, 0.6);
         _this.bg.position.x = 0;
@@ -91,6 +98,7 @@ var SceneMain = /** @class */ (function (_super) {
         _this.bg.tilePosition.x = 0;
         _this.bg.tilePosition.y = 0;
         app.stage.addChild(_this.bg);
+        // Add the animation to the screen
         var frames = [];
         for (var i = 0; i < 13; i++) {
             var tex = new PIXI.Texture(PIXI.loader.resources["stars"].texture);
@@ -107,10 +115,12 @@ var SceneMain = /** @class */ (function (_super) {
         _this.stars.scale.set(10, 10);
         _this.stars.play();
         app.stage.addChild(_this.stars);
+        // Add the logo
         _this.logo = new PIXI.Sprite(PIXI.loader.resources["logo"].texture);
         _this.logo.x = (width - _this.logo.width) / 4;
         _this.logo.y = (height - _this.logo.height) / 3;
         app.stage.addChild(_this.logo);
+        // Create the buttons
         _this.buttons = new Array(4);
         _this.buttons[0] = new Button("button1", 100, 500);
         _this.buttons[1] = new Button("button2", 250, 500);
@@ -119,24 +129,16 @@ var SceneMain = /** @class */ (function (_super) {
         return _this;
     }
     SceneMain.prototype.onUpdate = function () {
+        // Update the background
         this.bg.tilePosition.x -= 1;
+        // Check for button actions
         if (msg == "buttonExit") {
-            //this.onExit();
-            //currentScene = new SceneSplash();
             window.location.replace("https://www.linkedin.com/in/mil%C3%A1n-kov%C3%A1cs-267b0993/");
         }
         if (msg == "button1" || msg == "button2" || msg == "button3") {
+            msg = "";
             this.onExit();
             currentScene = new SceneGame();
-        }
-    };
-    SceneMain.prototype.onExit = function () {
-        msg = "";
-        app.stage.removeChild(this.logo);
-        app.stage.removeChild(this.stars);
-        app.stage.removeChild(this.bg);
-        for (var i = 0; i < 4; i++) {
-            this.buttons[i].destroy();
         }
     };
     return SceneMain;
@@ -145,7 +147,6 @@ var Button = /** @class */ (function () {
     function Button(tex, x, y) {
         this.isdown = false;
         this.isOver = false;
-        this.message = tex;
         var texture = PIXI.utils.TextureCache[tex];
         var rectangle = new PIXI.Rectangle(0, 0, texture.width, 40);
         texture.frame = rectangle;
@@ -154,6 +155,7 @@ var Button = /** @class */ (function () {
         this.button.y = y;
         this.button.interactive = true;
         this.button.buttonMode = true;
+        // message when button is pressed
         this.button.message = tex;
         this.button
             .on('pointerdown', this.onButtonDown)
@@ -200,25 +202,31 @@ var Button = /** @class */ (function () {
     };
     return Button;
 }());
+// The basic game
 var SceneGame = /** @class */ (function (_super) {
     __extends(SceneGame, _super);
     function SceneGame() {
         var _this = _super.call(this) || this;
-        _this.isGameOver = false;
         _this.frame = 0;
         _this.fireDelay = 0;
+        _this.isGameOver = false;
+        // Init the far background
         _this.bgFar = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgFar"].texture, 320, 240);
         _this.bgFar.scale.set(2.5, 2.5);
         app.stage.addChild(_this.bgFar);
+        // Init the close background
         _this.bgClose = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgClose"].texture, 1440, 240);
         _this.bgClose.scale.set(2.5, 2.5);
         app.stage.addChild(_this.bgClose);
+        // Init the player spaceship
         _this.player = new PIXI.Sprite(PIXI.loader.resources["player"].texture);
         _this.player.x = 50;
         _this.player.y = height / 2;
         app.stage.addChild(_this.player);
+        // Create a particle container for explosions
         _this.particle = new PIXI.ParticleContainer();
         app.stage.addChild(_this.particle);
+        // Empty array of enemies and projectiles
         _this.enemies = [];
         _this.projectiles = [];
         return _this;
@@ -232,9 +240,27 @@ var SceneGame = /** @class */ (function (_super) {
             }
             return;
         }
+        this.updateBackground();
+        this.updatePlayer();
+        this.updateProjectiles();
+        this.updateEnemies();
+        this.updateParticles();
+    };
+    SceneGame.prototype.collide = function (spriteA, spriteB) {
+        if (spriteA.x < spriteB.x + spriteB.width &&
+            spriteA.x + spriteA.width > spriteB.x &&
+            spriteA.y < spriteB.y + spriteB.height &&
+            spriteA.height + spriteA.y > spriteB.y) {
+            return true;
+        }
+        return false;
+    };
+    SceneGame.prototype.updateBackground = function () {
         // Update Background
         this.bgFar.tilePosition.x -= 1;
         this.bgClose.tilePosition.x -= 4;
+    };
+    SceneGame.prototype.updatePlayer = function () {
         // Player controls
         if (keyLeft && this.player.x > 0) {
             this.player.x -= speed;
@@ -260,17 +286,8 @@ var SceneGame = /** @class */ (function (_super) {
             app.stage.addChild(newProjectile);
             this.fireDelay = 30;
         }
-        // Timer for adding new enemies
-        this.frame++;
-        if (this.frame >= 120) {
-            var newEnemy = new PIXI.Sprite(PIXI.loader.resources["enemy"].texture);
-            newEnemy.scale.set(0.25, 0.25);
-            newEnemy.x = width + 50;
-            newEnemy.y = Math.random() * (height - newEnemy.height);
-            this.enemies.push(newEnemy);
-            app.stage.addChild(newEnemy);
-            this.frame = 0;
-        }
+    };
+    SceneGame.prototype.updateProjectiles = function () {
         // Update projectiles
         for (var i = 0; i < this.projectiles.length; i++) {
             this.projectiles[i].x += speed * 3;
@@ -280,10 +297,42 @@ var SceneGame = /** @class */ (function (_super) {
                 i--;
             }
         }
-        // Update enemies
+    };
+    SceneGame.prototype.updateEnemies = function () {
+        this.spawnEnemy();
+        this.moveEnemies();
+        this.checkPlayerCollision();
+        this.checkProjectileCollision();
+    };
+    SceneGame.prototype.spawnEnemy = function () {
+        this.frame++;
+        // Spawn new enemy every 2 seconds
+        if (this.frame >= 120) {
+            var newEnemy = new PIXI.Sprite(PIXI.loader.resources["enemy"].texture);
+            newEnemy.scale.set(0.25, 0.25);
+            newEnemy.x = width + 50;
+            newEnemy.y = Math.random() * (height - newEnemy.height);
+            this.enemies.push(newEnemy);
+            app.stage.addChild(newEnemy);
+            this.frame = 0;
+        }
+    };
+    SceneGame.prototype.moveEnemies = function () {
         for (var i = 0; i < this.enemies.length; i++) {
+            // Update position
             this.enemies[i].x -= speed;
+            // Remove when left the screen
+            if (this.enemies[i].x < -this.enemies[i].width) {
+                app.stage.removeChild(this.enemies[i]);
+                this.enemies.splice(i, 1);
+                i--;
+            }
+        }
+    };
+    SceneGame.prototype.checkPlayerCollision = function () {
+        for (var i = 0; i < this.enemies.length; i++) {
             if (this.collide(this.enemies[i], this.player)) {
+                // Game Over
                 this.frame = 0;
                 this.isGameOver = true;
                 this.gameOver = new PIXI.Sprite(PIXI.loader.resources["gameover"].texture);
@@ -291,9 +340,13 @@ var SceneGame = /** @class */ (function (_super) {
                 this.gameOver.y = (height - this.gameOver.height) / 2;
                 app.stage.addChild(this.gameOver);
             }
+        }
+    };
+    SceneGame.prototype.checkProjectileCollision = function () {
+        for (var i = 0; i < this.enemies.length; i++) {
             for (var j = 0; j < this.projectiles.length; j++) {
                 if (this.collide(this.enemies[i], this.projectiles[j])) {
-                    // add particles
+                    // Add particles
                     for (var p = 0; p < 10; p++) {
                         var tex = new PIXI.Sprite(PIXI.loader.resources["particle"].texture);
                         tex.x = this.enemies[i].x;
@@ -303,10 +356,11 @@ var SceneGame = /** @class */ (function (_super) {
                         tex.vy = Math.sin(p * Math.PI / 5) * 3 * speed;
                         this.particle.addChild(tex);
                     }
-                    // remove enemy and projectile
+                    // Remove enemy
                     app.stage.removeChild(this.enemies[i]);
                     this.enemies.splice(i, 1);
                     i--;
+                    // Remove projectile
                     app.stage.removeChild(this.projectiles[j]);
                     this.projectiles.splice(j, 1);
                     j--;
@@ -314,13 +368,8 @@ var SceneGame = /** @class */ (function (_super) {
                 }
             }
         }
-        for (var i = 0; i < this.enemies.length; i++) {
-            if (this.enemies[i].x < -this.enemies[i].width) {
-                app.stage.removeChild(this.enemies[i]);
-                this.enemies.splice(i, 1);
-                i--;
-            }
-        }
+    };
+    SceneGame.prototype.updateParticles = function () {
         // Update Particles
         for (var i = 0; i < this.particle.children.length; i++) {
             this.particle.children[i].x += this.particle.children[i].vx;
@@ -331,18 +380,6 @@ var SceneGame = /** @class */ (function (_super) {
                 i--;
             }
         }
-    };
-    SceneGame.prototype.onExit = function () {
-        app.stage.removeChildren(0, app.stage.children.length);
-    };
-    SceneGame.prototype.collide = function (spriteA, spriteB) {
-        if (spriteA.x < spriteB.x + spriteB.width &&
-            spriteA.x + spriteA.width > spriteB.x &&
-            spriteA.y < spriteB.y + spriteB.height &&
-            spriteA.height + spriteA.y > spriteB.y) {
-            return true;
-        }
-        return false;
     };
     return SceneGame;
 }(Scene));
