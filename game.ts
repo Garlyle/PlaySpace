@@ -2,6 +2,7 @@ import * as PIXI from './lib/pixi.min.js'
 
 var width = 800;
 var height = 600;
+var speed = 4;
 var currentScene;
 var msg = "text";
 var keyLeft, keyRight, keyUp, keyDown, keySpace;
@@ -28,6 +29,13 @@ PIXI.loader
   .add("button3", "assets/button3.png")
   .add("buttonExit", "assets/buttonExit.png")
   .add("stars", "assets/stars.png")
+  .add("player", "assets/player.png")
+  .add("enemy", "assets/enemy.png")
+  .add("projectile", "assets/projectile.png")
+  .add("particle", "assets/particle.png")
+  .add("bgClose", "assets/bgClose.png")
+  .add("bgFar", "assets/bgFar.png")
+  .add("gameover", "assets/game_over.png")
   .load(run);
 
 abstract class Scene {
@@ -206,17 +214,45 @@ class Button {
 }
 
 class SceneGame extends Scene {
+	player: PIXI.Sprite;
+	enemy: PIXI.Sprite;
+	particle: PIXI.Sprite;
+	projctile: PIXI.Sprite;
+	bgFar: PIXI.extras.TilingSprite;
+	bgClose: PIXI.extras.TilingSprite;
+	gameOver: PIXI.Sprite;
 	constructor() {
 		super();
+		this.bgFar = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgFar"].texture, 320, 240);
+		this.bgFar.scale.set(2.5, 2.5);
+		app.stage.addChild(this.bgFar);
+
+		this.bgClose = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgClose"].texture, 1440, 240);
+		this.bgClose.scale.set(2.5, 2.5);
+		app.stage.addChild(this.bgClose);
+
+		this.player = new PIXI.Sprite(PIXI.loader.resources["player"].texture);
+		this.player.x = 50;
+		this.player.y = height / 2;
+		app.stage.addChild(this.player);
 	}
 	onUpdate(): void {
-
-	}
-	onRender(): void {
-
+		this.bgFar.tilePosition.x -= 1;
+		this.bgClose.tilePosition.x -= 4;
+		if (keyLeft && this.player.x > 0) {
+			this.player.x -= speed;
+		} else if(keyRight && this.player.x < width - this.player.texture.width) {
+			this.player.x += speed;
+		}
+		if (keyUp && this.player.y > 0) {
+			this.player.y -= speed;
+		} else if(keyDown && this.player.y < height - this.player.texture.height) {
+			this.player.y += speed;
+		}
 	}
 	onExit(): void {
-
+		app.stage.removeChild(this.bgFar);
+		app.stage.removeChild(this.bgClose);
 	}
 }
 
@@ -254,7 +290,7 @@ function keyReleased(event) {
 
 function run() {
 	// Init Global Variables
-	currentScene = new SceneMain();
+	currentScene = new SceneGame();
 	keyLeft = false;
 	keyRight = false;
 	keyUp = false;

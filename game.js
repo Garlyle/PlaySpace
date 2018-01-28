@@ -13,6 +13,7 @@ var __extends = (this && this.__extends) || (function () {
 //var PIXI = require("./lib/pixi.min.js");
 var width = 800;
 var height = 600;
+var speed = 4;
 var currentScene;
 var msg = "text";
 var keyLeft, keyRight, keyUp, keyDown, keySpace;
@@ -35,6 +36,13 @@ PIXI.loader
     .add("button3", "assets/button3.png")
     .add("buttonExit", "assets/buttonExit.png")
     .add("stars", "assets/stars.png")
+    .add("player", "assets/player.png")
+    .add("enemy", "assets/enemy.png")
+    .add("projectile", "assets/projectile.png")
+    .add("particle", "assets/particle.png")
+    .add("bgClose", "assets/bgClose.png")
+    .add("bgFar", "assets/bgFar.png")
+    .add("gameover", "assets/game_over.png")
     .load(run);
 var Scene = /** @class */ (function () {
     function Scene() {
@@ -194,13 +202,38 @@ var Button = /** @class */ (function () {
 var SceneGame = /** @class */ (function (_super) {
     __extends(SceneGame, _super);
     function SceneGame() {
-        return _super.call(this) || this;
+        var _this = _super.call(this) || this;
+        _this.bgFar = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgFar"].texture, 320, 240);
+        _this.bgFar.scale.set(2.5, 2.5);
+        app.stage.addChild(_this.bgFar);
+        _this.bgClose = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgClose"].texture, 1440, 240);
+        _this.bgClose.scale.set(2.5, 2.5);
+        app.stage.addChild(_this.bgClose);
+        _this.player = new PIXI.Sprite(PIXI.loader.resources["player"].texture);
+        _this.player.x = 50;
+        _this.player.y = height / 2;
+        app.stage.addChild(_this.player);
+        return _this;
     }
     SceneGame.prototype.onUpdate = function () {
-    };
-    SceneGame.prototype.onRender = function () {
+        this.bgFar.tilePosition.x -= 1;
+        this.bgClose.tilePosition.x -= 4;
+        if (keyLeft && this.player.x > 0) {
+            this.player.x -= speed;
+        }
+        else if (keyRight && this.player.x < width - this.player.texture.width) {
+            this.player.x += speed;
+        }
+        if (keyUp && this.player.y > 0) {
+            this.player.y -= speed;
+        }
+        else if (keyDown && this.player.y < height - this.player.texture.height) {
+            this.player.y += speed;
+        }
     };
     SceneGame.prototype.onExit = function () {
+        app.stage.removeChild(this.bgFar);
+        app.stage.removeChild(this.bgClose);
     };
     return SceneGame;
 }(Scene));
@@ -240,7 +273,7 @@ function keyReleased(event) {
 }
 function run() {
     // Init Global Variables
-    currentScene = new SceneMain();
+    currentScene = new SceneGame();
     keyLeft = false;
     keyRight = false;
     keyUp = false;
