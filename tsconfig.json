@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "strictNullChecks": true,
+        "outDir": "./",
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "target": "es5"
+    },
+    "files": [
+        "./game.ts",
+        "./lib/pixi.min.js"
+    ]
+}
