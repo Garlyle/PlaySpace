@@ -27,6 +27,7 @@ PIXI.loader
   .add("button2", "assets/button2.png")
   .add("button3", "assets/button3.png")
   .add("buttonExit", "assets/buttonExit.png")
+  .add("stars", "assets/stars.png")
   .load(run);
 
 abstract class Scene {
@@ -68,13 +69,40 @@ class SceneSplash extends Scene {
 
 class SceneMain extends Scene {
 	private buttons: PIXI.Sprite[];
-	private bg: PIXI.Sprite;
+	private bg: PIXI.extras.TilingSprite;
+	private stars: PIXI.extras.AnimatedSprite;
+	private logo: PIXI.Sprite;
 	constructor() {
 		super();
-		this.bg = new PIXI.Sprite(PIXI.loader.resources["bgStars"].texture);
-		this.bg.width = width;
-		this.bg.height = height;
+		this.bg = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgStars"].texture, 1920, 1080);
+		this.bg.scale.set(0.6, 0.6);
+		this.bg.position.x = 0;
+		this.bg.position.y = 0;
+		this.bg.tilePosition.x = 0;
+		this.bg.tilePosition.y = 0;
 		app.stage.addChild(this.bg);
+
+		var frames = [];
+		for (var i = 0; i < 13; i++) {
+			var tex = new PIXI.Texture(PIXI.loader.resources["stars"].texture);
+			var rectangle = new PIXI.Rectangle((i % 5) * 96, Math.floor(i / 5) * 96, 96, 96);
+			tex.frame = rectangle;			
+			frames.push(tex);
+		}
+		this.stars = new PIXI.extras.AnimatedSprite(frames);
+	    this.stars.x = app.screen.width / 2;
+	    this.stars.y = app.screen.height / 2;
+	    this.stars.anchor.set(0.5);
+	    this.stars.animationSpeed = 0.1;
+	    this.stars.alpha = 0.2;
+	    this.stars.scale.set(10, 10);
+	    this.stars.play();
+		app.stage.addChild(this.stars);
+
+		this.logo = new PIXI.Sprite(PIXI.loader.resources["logo"].texture);
+		this.logo.x = (width - this.logo.width) / 4;
+		this.logo.y = (height - this.logo.height) / 3;
+		app.stage.addChild(this.logo);
 
 		this.buttons = new Array(4);
 
@@ -85,11 +113,12 @@ class SceneMain extends Scene {
 
 	}
 	onUpdate(): void {
+		this.bg.tilePosition.x -= 1;
 		if (msg == "buttonExit") {
 			this.onExit();
 			currentScene = new SceneSplash();
 		}
-		if (msg == "button1" || msg = "button2" || msg = "button3") {
+		if (msg == "button1" || msg == "button2" || msg == "button3") {
 			this.onExit();
 			currentScene = new SceneGame();
 		}
@@ -97,6 +126,8 @@ class SceneMain extends Scene {
 
 	onExit(): void {
 		msg = "";
+		app.stage.removeChild(this.logo);
+		app.stage.removeChild(this.stars);
 		app.stage.removeChild(this.bg);
 		for(var i = 0; i < 4; i++) {
 			this.buttons[i].destroy();
@@ -143,8 +174,6 @@ class Button {
 	    if (this.isOver) {
 	        this.texture.frame.y = 40;
 	        msg = this.message;
-	        console.log(msg);
-	        console.log(this.message);
 	    }
 	    else {
 	        this.texture.frame.y = 0;
@@ -239,5 +268,4 @@ function run() {
 function update() {
   requestAnimationFrame(update);
   currentScene.onUpdate();
-  currentScene.onRender();
 }

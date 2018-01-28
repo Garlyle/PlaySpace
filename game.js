@@ -34,6 +34,7 @@ PIXI.loader
     .add("button2", "assets/button2.png")
     .add("button3", "assets/button3.png")
     .add("buttonExit", "assets/buttonExit.png")
+    .add("stars", "assets/stars.png")
     .load(run);
 var Scene = /** @class */ (function () {
     function Scene() {
@@ -66,9 +67,6 @@ var SceneSplash = /** @class */ (function (_super) {
         }
         this.frame++;
     };
-    SceneSplash.prototype.onRender = function () {
-        // no extra updates
-    };
     SceneSplash.prototype.onExit = function () {
         app.stage.removeChild(this.logo);
     };
@@ -78,10 +76,33 @@ var SceneMain = /** @class */ (function (_super) {
     __extends(SceneMain, _super);
     function SceneMain() {
         var _this = _super.call(this) || this;
-        _this.bg = new PIXI.Sprite(PIXI.loader.resources["bgStars"].texture);
-        _this.bg.width = width;
-        _this.bg.height = height;
+        _this.bg = new PIXI.extras.TilingSprite(PIXI.loader.resources["bgStars"].texture, 1920, 1080);
+        _this.bg.scale.set(0.6, 0.6);
+        _this.bg.position.x = 0;
+        _this.bg.position.y = 0;
+        _this.bg.tilePosition.x = 0;
+        _this.bg.tilePosition.y = 0;
         app.stage.addChild(_this.bg);
+        var frames = [];
+        for (var i = 0; i < 13; i++) {
+            var tex = new PIXI.Texture(PIXI.loader.resources["stars"].texture);
+            var rectangle = new PIXI.Rectangle((i % 5) * 96, Math.floor(i / 5) * 96, 96, 96);
+            tex.frame = rectangle;
+            frames.push(tex);
+        }
+        _this.stars = new PIXI.extras.AnimatedSprite(frames);
+        _this.stars.x = app.screen.width / 2;
+        _this.stars.y = app.screen.height / 2;
+        _this.stars.anchor.set(0.5);
+        _this.stars.animationSpeed = 0.1;
+        _this.stars.alpha = 0.2;
+        _this.stars.scale.set(10, 10);
+        _this.stars.play();
+        app.stage.addChild(_this.stars);
+        _this.logo = new PIXI.Sprite(PIXI.loader.resources["logo"].texture);
+        _this.logo.x = (width - _this.logo.width) / 4;
+        _this.logo.y = (height - _this.logo.height) / 3;
+        app.stage.addChild(_this.logo);
         _this.buttons = new Array(4);
         _this.buttons[0] = new Button("button1", 100, 500);
         _this.buttons[1] = new Button("button2", 250, 500);
@@ -90,15 +111,20 @@ var SceneMain = /** @class */ (function (_super) {
         return _this;
     }
     SceneMain.prototype.onUpdate = function () {
+        this.bg.tilePosition.x -= 1;
         if (msg == "buttonExit") {
             this.onExit();
             currentScene = new SceneSplash();
         }
-    };
-    SceneMain.prototype.onRender = function () {
+        if (msg == "button1" || msg == "button2" || msg == "button3") {
+            this.onExit();
+            currentScene = new SceneGame();
+        }
     };
     SceneMain.prototype.onExit = function () {
         msg = "";
+        app.stage.removeChild(this.logo);
+        app.stage.removeChild(this.stars);
         app.stage.removeChild(this.bg);
         for (var i = 0; i < 4; i++) {
             this.buttons[i].destroy();
@@ -138,8 +164,6 @@ var Button = /** @class */ (function () {
         if (this.isOver) {
             this.texture.frame.y = 40;
             msg = this.message;
-            console.log(msg);
-            console.log(this.message);
         }
         else {
             this.texture.frame.y = 0;
@@ -228,5 +252,4 @@ function run() {
 function update() {
     requestAnimationFrame(update);
     currentScene.onUpdate();
-    currentScene.onRender();
 }
