@@ -216,7 +216,7 @@ class Button {
 class SceneGame extends Scene {
 	player: PIXI.Sprite;
 	enemies: PIXI.Sprite[];
-	particle: PIXI.Sprite;
+	particle: PIXI.ParticleContainer;
 	projectiles: PIXI.Sprite[];
 	bgFar: PIXI.extras.TilingSprite;
 	bgClose: PIXI.extras.TilingSprite;
@@ -241,6 +241,9 @@ class SceneGame extends Scene {
 		this.player.x = 50;
 		this.player.y = height / 2;
 		app.stage.addChild(this.player);
+
+		this.particle = new PIXI.ParticleContainer();
+		app.stage.addChild(this.particle);
 
 		this.enemies = [];
 		this.projectiles = [];
@@ -305,6 +308,18 @@ class SceneGame extends Scene {
 			}
 			for (var j = 0; j < this.projectiles.length; j++) {
 				if (this.collide(this.enemies[i], this.projectiles[j])) {
+					// add particles
+					for (var p = 0; p < 10; p++) {
+						var tex = new PIXI.Sprite(PIXI.loader.resources["particle"].texture);
+						tex.x = this.enemies[i].x;
+						tex.y = this.enemies[i].y;
+						tex.alpha = 1;
+						tex.vx = Math.cos(p * Math.PI / 5) * 3 * speed;
+						tex.vy = Math.sin(p * Math.PI / 5) * 3 * speed;
+						this.particle.addChild(tex);
+					}
+
+					// remove enemy and projectile
 					app.stage.removeChild(this.enemies[i]);
 					this.enemies.splice(i, 1);
 					i--;
@@ -319,6 +334,17 @@ class SceneGame extends Scene {
 			if (this.enemies[i].x < -this.enemies[i].width) {
 				app.stage.removeChild(this.enemies[i]);
 				this.enemies.splice(i, 1);
+				i--;
+			}
+		}
+
+		// Update Particles
+		for (var i = 0; i < this.particle.children.length; i++) {
+			this.particle.children[i].x += this.particle.children[i].vx;
+			this.particle.children[i].y += this.particle.children[i].vy;
+			this.particle.children[i].alpha -= 0.1;
+			if (this.particle.children[i].alpha <= 0) {
+				this.particle.removeChildAt(i);
 				i--;
 			}
 		}

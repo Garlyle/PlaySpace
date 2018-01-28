@@ -215,6 +215,8 @@ var SceneGame = /** @class */ (function (_super) {
         _this.player.x = 50;
         _this.player.y = height / 2;
         app.stage.addChild(_this.player);
+        _this.particle = new PIXI.ParticleContainer(1000, { alphaAndTint: true });
+        app.stage.addChild(_this.particle);
         _this.enemies = [];
         _this.projectiles = [];
         return _this;
@@ -277,6 +279,17 @@ var SceneGame = /** @class */ (function (_super) {
             }
             for (var j = 0; j < this.projectiles.length; j++) {
                 if (this.collide(this.enemies[i], this.projectiles[j])) {
+                    // add particles
+                    for (var p = 0; p < 10; p++) {
+                        var tex = new PIXI.Sprite(PIXI.loader.resources["particle"].texture);
+                        tex.x = this.enemies[i].x;
+                        tex.y = this.enemies[i].y;
+                        tex.alpha = 1;
+                        tex.vx = Math.cos(p * Math.PI / 5) * 3 * speed;
+                        tex.vy = Math.sin(p * Math.PI / 5) * 3 * speed;
+                        this.particle.addChild(tex);
+                    }
+                    // remove enemy and projectile
                     app.stage.removeChild(this.enemies[i]);
                     this.enemies.splice(i, 1);
                     i--;
@@ -291,6 +304,16 @@ var SceneGame = /** @class */ (function (_super) {
             if (this.enemies[i].x < -this.enemies[i].width) {
                 app.stage.removeChild(this.enemies[i]);
                 this.enemies.splice(i, 1);
+                i--;
+            }
+        }
+        // Update Particles
+        for (var i = 0; i < this.particle.children.length; i++) {
+            this.particle.children[i].x += this.particle.children[i].vx;
+            this.particle.children[i].y += this.particle.children[i].vy;
+            this.particle.children[i].alpha -= 0.1;
+            if (this.particle.children[i].alpha <= 0) {
+                this.particle.removeChildAt(i);
                 i--;
             }
         }
